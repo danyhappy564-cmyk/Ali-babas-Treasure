@@ -256,7 +256,7 @@ public class TreasureMod(
     /// The client reads one list for both checks: the main menu refuses the raid unless an equipped,
     /// examined item's template is in <c>AccessKeys</c>, and <c>BaseLocalGame</c> spends a use of that
     /// same item when the raid starts (removing it when the count reaches the maximum, never when
-    /// uses are unlimited). Adding the pass's id to the list is therefore all it takes (kb 2.37).
+    /// uses are unlimited). Adding the pass's id to the list is therefore all it takes (kb 2.39).
     /// </remarks>
     private List<string> AddRaidAccessKeys()
     {
