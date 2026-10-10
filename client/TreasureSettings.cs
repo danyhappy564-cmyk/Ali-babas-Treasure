@@ -84,6 +84,7 @@ internal sealed class TreasureSettings
     private readonly List<Text> _texts = new();
 
     public ConfigEntry<string> Language { get; }
+    public ConfigEntry<bool> ResetChances { get; }
     public ItemEntries Keycard { get; }
     public ItemEntries Key { get; }
     public ItemEntries MarkedKey { get; }
@@ -130,8 +131,58 @@ internal sealed class TreasureSettings
             "Labyrinth entry only - one use per raid entered while it is equipped; opens no doors",
             TreasureLimits.LabyrinthPassDefaultPrice, TreasureLimits.LabyrinthPassDefaultUses);
 
+        ResetChances = config.Bind(
+            "00. Language",
+            "Reset all spawn chances",
+            false,
+            new ConfigDescription(
+                "Tick to set every spawn chance of every item back to 0 (never). It unticks itself.",
+                null,
+                Attributes("00. Language · 언어", "00. Language · 언어",
+                    "모든 등장 확률 0으로 · Reset spawn chances", "Reset all spawn chances · 확률 초기화",
+                    "체크하면 모든 아이템의 바닥·컨테이너·봇 등장 확률을 한 번에 0(안 나옴)으로 되돌립니다. 체크는 저절로 풀립니다.\n"
+                    + "가격·사용 횟수·무제한은 건드리지 않습니다.",
+                    "Tick to set the loose, container and bot chances of every item back to 0 (never). It unticks itself.\n"
+                    + "Prices, uses and unlimited are left alone.",
+                    90)));
+
+        // A tick left in the .cfg (game closed mid-click) must not wipe the chances on the next start.
+        ResetChances.Value = false;
+
         ApplyLanguage();
         Language.SettingChanged += (_, _) => ApplyLanguage();
+        ResetChances.SettingChanged += (_, _) => ResetAllChances();
+    }
+
+    private IEnumerable<ItemEntries> AllItems()
+    {
+        yield return Keycard;
+        yield return Key;
+        yield return MarkedKey;
+        yield return LabsPass;
+        yield return LabyrinthPass;
+    }
+
+    /// <summary>
+    /// The "button": a checkbox that zeroes every chance and unticks itself. Each zeroed entry
+    /// raises SettingChanged, which the plugin folds into one debounced send to the server.
+    /// </summary>
+    private void ResetAllChances()
+    {
+        if (!ResetChances.Value)
+        {
+            return;
+        }
+
+        foreach (var item in AllItems())
+        {
+            item.LooseChance.Value = 0f;
+            item.ContainerChance.Value = 0f;
+            item.BotChance.Value = 0f;
+        }
+
+        ResetChances.Value = false;
+        TreasurePlugin.Log?.LogInfo("All spawn chances reset to 0.");
     }
 
     private ItemEntries BindItem(ConfigFile config, string section, string categoryKo, string categoryEn,

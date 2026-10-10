@@ -8,6 +8,7 @@
 
 ## 변경 이력
 
+- 2026-10-10 17:08 — 1.3.1. F12 맨 위에 **"모든 등장 확률 0으로"** 버튼 추가 — 체크하면 5개 아이템의 바닥·컨테이너·봇 확률을 한 번에 0으로 되돌리고 체크는 저절로 풀립니다(가격·횟수는 그대로).
 - 2026-10-10 17:05 — 1.3.0. **알리바바의 래버린스 출입증** 추가(래브리스 카드 모델) — 래버린스에 여러 번 들어갈 수 있는 출입증(기본 10회, 문은 못 엶).
   **툴팁 개선**: 출입증은 "남은 입장 횟수 3/10회"로 표시, 모든 알리바바 아이템의 남은 횟수·무제한 표시가 F12 변경 즉시 바뀝니다(전에는 게임 재시작 필요).
 - 2026-10-10 17:00 — 1.2.0. **알리바바의 연구소 출입증** 추가(검은 랩스 키카드 모델) — 연구소에 여러 번 들어갈 수 있는 출입증(기본 10회, 문은 못 엶).
@@ -70,6 +71,7 @@
 게임 안에서 **F12** → `Ali Baba's Treasure`. 맨 위 **`00. Language · 언어`** 에서 한국어/English를 고릅니다
 (자동 = 한국어 윈도우면 한국어, 아니면 영어). 언어를 바꾼 뒤에는 **F12 창을 닫았다 다시 열면** 바뀝니다.
 이 항목 이름은 언어와 관계없이 두 언어로 같이 써 있어서, 한국어로 되어 있어도 영어 사용자가 찾을 수 있습니다.
+같은 칸의 **`모든 등장 확률 0으로 · Reset spawn chances`** 를 체크하면 모든 아이템의 등장 확률이 0으로 돌아갑니다(체크는 저절로 풀림).
 
 아이템마다(`01. 알리바바의 키카드`, `02. 알리바바의 열쇠`, `03. 알리바바의 마크방 열쇠`, `04. 알리바바의 연구소 출입증`, `05. 알리바바의 래버린스 출입증`) 같은 6개 항목이 있습니다.
 출입증의 "사용 가능 횟수"는 곧 **입장 가능 횟수**입니다.
@@ -91,7 +93,7 @@
 
 ## 설치
 
-1. 서버 zip(`AlibabaTreasure-Server-1.3.0.zip`)과 클라 zip(`AlibabaTreasure-Client-1.3.0.zip`)을 `E:\SPT 4.1` 에 그대로 풀기
+1. 서버 zip(`AlibabaTreasure-Server-1.3.1.zip`)과 클라 zip(`AlibabaTreasure-Client-1.3.1.zip`)을 `E:\SPT 4.1` 에 그대로 풀기
    (zip 안 폴더 구조가 `SPT_Runtime\user\mods\...`, `BepInEx\plugins\...` 로 되어 있습니다).
 2. 서버를 한 번 켜면 `SPT_Runtime\user\mods\AlibabaTreasure\config\config.json` 이 만들어집니다.
 3. 서버 로그에 `[AlibabaTreasure] registered 5 item(s)` 와 `Raid entry accepted on: laboratory, labyrinth` 비슷한 줄이 보이면 정상입니다.
@@ -126,8 +128,8 @@
 ## 직접 빌드
 
 ```
-dotnet build server -c Release      # 서버 모드 + release\AlibabaTreasure-Server-1.3.0.zip
-dotnet build client -c Release      # 클라 플러그인 + release\AlibabaTreasure-Client-1.3.0.zip
+dotnet build server -c Release      # 서버 모드 + release\AlibabaTreasure-Server-1.3.1.zip
+dotnet build client -c Release      # 클라 플러그인 + release\AlibabaTreasure-Client-1.3.1.zip
 ```
 
 - 게임 경로는 기본 `E:\SPT 4.1` (`Directory.Build.props`). 다르면 `-p:SptRoot=경로` 또는 `local.props`.
