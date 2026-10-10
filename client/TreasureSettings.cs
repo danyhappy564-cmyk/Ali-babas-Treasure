@@ -87,6 +87,7 @@ internal sealed class TreasureSettings
     public ItemEntries Keycard { get; }
     public ItemEntries Key { get; }
     public ItemEntries MarkedKey { get; }
+    public ItemEntries LabsPass { get; }
 
     public TreasureSettings(ConfigFile config)
     {
@@ -104,8 +105,8 @@ internal sealed class TreasureSettings
                     100)));
 
         Keycard = BindItem(config, "01. Keycard", "01. 알리바바의 키카드", "01. Ali Baba's Keycard",
-            "카드 리더가 달린 모든 문(랩스 색깔 문, 창고 등), 키카드가 필요한 모든 잠금·탈출구, 랩스(연구소)·래버린스 입장",
-            "every card-reader door (Labs colour doors, storage rooms, ...), every lock or extract that takes a keycard, Labs and Labyrinth entry",
+            "카드 리더가 달린 모든 문(랩스 색깔 문, 창고 등), 키카드가 필요한 모든 잠금·탈출구 (연구소 입장은 안 됨 → 04번 출입증)",
+            "every card-reader door (Labs colour doors, storage rooms, ...), every lock or extract that takes a keycard (not Labs entry - see 04)",
             TreasureLimits.KeycardDefaultPrice, TreasureLimits.KeycardDefaultUses);
 
         Key = BindItem(config, "02. Key", "02. 알리바바의 열쇠", "02. Ali Baba's Key",
@@ -117,6 +118,11 @@ internal sealed class TreasureSettings
             "모든 마크방(세관 기숙사 314, 리저브 RB-BK/VO/PKPM, 등대, 시내 2곳, 이름에 'marked'가 붙은 모드 열쇠의 방까지). 다른 문은 못 엽니다",
             "every marked room (Customs dorm 314, Reserve RB-BK/VO/PKPM, Lighthouse, two on Streets, and any modded key named 'marked'). Opens nothing else",
             TreasureLimits.MarkedKeyDefaultPrice, TreasureLimits.MarkedKeyDefaultUses);
+
+        LabsPass = BindItem(config, "04. Labs pass", "04. 알리바바의 연구소 출입증", "04. Ali Baba's Labs Pass",
+            "연구소(랩스) 입장만 — 장착하고 들어갈 때마다 1회씩 닳고, 문은 못 엽니다",
+            "Labs entry only - one use per raid entered while it is equipped; opens no doors",
+            TreasureLimits.LabsPassDefaultPrice, TreasureLimits.LabsPassDefaultUses);
 
         ApplyLanguage();
         Language.SettingChanged += (_, _) => ApplyLanguage();

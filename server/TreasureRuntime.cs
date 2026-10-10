@@ -57,6 +57,7 @@ public class TreasureRuntime(
         ApplyItem(TreasureIds.KeycardId, "keycard", previous.Keycard!, applied.Keycard!, changes);
         ApplyItem(TreasureIds.KeyId, "key", previous.Key!, applied.Key!, changes);
         ApplyItem(TreasureIds.MarkedKeyId, "marked key", previous.MarkedKey!, applied.MarkedKey!, changes);
+        ApplyItem(TreasureIds.LabsPassId, "labs pass", previous.LabsPass!, applied.LabsPass!, changes);
         return changes;
     }
 

@@ -12,11 +12,11 @@ using UnityEngine;
 namespace AlibabaTreasure.Client;
 
 /// <summary>
-/// Ali Baba's Treasure, client half: lets the three treasures open locks, extracts and the Labs
-/// entrance, and is the F12 front end
+/// Ali Baba's Treasure, client half: lets the treasures open locks and extracts (the Labs pass is
+/// handled by the server's entry-key list), and is the F12 front end
 /// for the server mod's prices, uses and spawn chances.
 /// </summary>
-[BepInPlugin(PluginGuid, "Ali Baba's Treasure", "1.1.0")]
+[BepInPlugin(PluginGuid, "Ali Baba's Treasure", "1.2.0")]
 public class TreasurePlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.rf.alibabatreasure.client";
@@ -145,7 +145,8 @@ public class TreasurePlugin : BaseUnityPlugin
         _sending = true;
         var json = "{\"keycard\":" + _settings.Keycard.Read().ToJson()
             + ",\"key\":" + _settings.Key.Read().ToJson()
-            + ",\"markedKey\":" + _settings.MarkedKey.Read().ToJson() + "}";
+            + ",\"markedKey\":" + _settings.MarkedKey.Read().ToJson()
+            + ",\"labsPass\":" + _settings.LabsPass.Read().ToJson() + "}";
         ThreadPool.QueueUserWorkItem(_ =>
         {
             string? answer = null;
@@ -190,7 +191,8 @@ public class TreasurePlugin : BaseUnityPlugin
         var keycard = ItemValues.Parse(answer, "keycard");
         var key = ItemValues.Parse(answer, "key");
         var markedKey = ItemValues.Parse(answer, "markedKey");
-        if (keycard is null || key is null || markedKey is null)
+        var labsPass = ItemValues.Parse(answer, "labsPass");
+        if (keycard is null || key is null || markedKey is null || labsPass is null)
         {
             return false;
         }
@@ -204,6 +206,7 @@ public class TreasurePlugin : BaseUnityPlugin
             _settings.Keycard.Write(keycard);
             _settings.Key.Write(key);
             _settings.MarkedKey.Write(markedKey);
+            _settings.LabsPass.Write(labsPass);
         }
         finally
         {
@@ -236,7 +239,8 @@ public class TreasurePlugin : BaseUnityPlugin
         var keycard = Tune(factory, TreasureIds.KeycardId, _settings.Keycard.MaximumNumberOfUsage);
         var key = Tune(factory, TreasureIds.KeyId, _settings.Key.MaximumNumberOfUsage);
         var markedKey = Tune(factory, TreasureIds.MarkedKeyId, _settings.MarkedKey.MaximumNumberOfUsage);
-        if (keycard || key || markedKey)
+        var labsPass = Tune(factory, TreasureIds.LabsPassId, _settings.LabsPass.MaximumNumberOfUsage);
+        if (keycard || key || markedKey || labsPass)
         {
             _tunedFactory = factory;
             _usesDirty = false;

@@ -18,6 +18,7 @@ internal static class TreasureSpawn
         (TreasureIds.KeycardId, s => s.Keycard!),
         (TreasureIds.KeyId, s => s.Key!),
         (TreasureIds.MarkedKeyId, s => s.MarkedKey!),
+        (TreasureIds.LabsPassId, s => s.LabsPass!),
     ];
 
     /// <summary>True with <paramref name="percent"/>% probability. 0 never rolls at all.</summary>

@@ -62,10 +62,10 @@ public class TreasureMod(
             "Ali Card",
             "알리 카드",
             "An access card nobody at TerraGroup admits to issuing. Every card reader it is held against "
-            + "blinks green - Labs doors, storage rooms, keycard extracts, even the Labs entrance. "
-            + "Its chip is not built to last.",
+            + "blinks green - Labs doors, storage rooms, keycard extracts. It will not get you into the "
+            + "Labs themselves. Its chip is not built to last.",
             "테라그룹 누구도 발급한 적 없다는 출입 카드. 갖다 대는 카드 리더마다 초록불이 켜진다 — "
-            + "랩스 문도, 창고도, 키카드 탈출구도, 랩스 입구까지. 칩은 오래 버티도록 만들어지지 않았다.",
+            + "랩스 문도, 창고도, 키카드 탈출구도. 연구소 입장에는 쓸 수 없다. 칩은 오래 버티도록 만들어지지 않았다.",
             TreasureIds.HandbookElectronicKeys,
             s => s.Keycard!),
         new(
@@ -95,6 +95,19 @@ public class TreasureMod(
             + "그 밖의 문은 하나도 열지 않는다.",
             TreasureIds.HandbookMechanicalKeys,
             s => s.MarkedKey!),
+        new(
+            TreasureIds.LabsPassId,
+            TreasureIds.LabsPassCloneSource,
+            "Ali Baba's Labs Pass",
+            "알리바바의 연구소 출입증",
+            "Ali Lab",
+            "알리 연구소",
+            "A black TerraGroup pass that the Labs checkpoint never seems to cancel. It lets you into "
+            + "The Lab again and again, one entry per use. It opens no doors inside.",
+            "연구소 검문소가 한 번도 무효 처리하지 않는 검은 테라그룹 출입증. 쓸 때마다 한 번씩, 연구소에 몇 번이고 "
+            + "들어갈 수 있다. 안에 있는 문은 하나도 열지 못한다.",
+            TreasureIds.HandbookElectronicKeys,
+            s => s.LabsPass!),
     ];
 
     public Task OnLoadAsync(CancellationToken cancellationToken = default)
@@ -121,7 +134,8 @@ public class TreasureMod(
 
         logger.Success(
             $"{LogPrefix} registered {registered.Count} item(s). "
-            + $"Keycard {Describe(settings.Keycard!)} | Key {Describe(settings.Key!)} | Marked key {Describe(settings.MarkedKey!)}. "
+            + $"Keycard {Describe(settings.Keycard!)} | Key {Describe(settings.Key!)} | Marked key {Describe(settings.MarkedKey!)} "
+            + $"| Labs pass {Describe(settings.LabsPass!)}. "
             + $"Raid entry accepted on: {(accessMaps.Count == 0 ? "-" : string.Join(", ", accessMaps))}. "
             + "Flea market only - spawn chances are 0% unless changed in F12.");
         return Task.CompletedTask;
@@ -180,6 +194,7 @@ public class TreasureMod(
             {
                 TreasureIds.KeycardId => "alibaba_keycard",
                 TreasureIds.MarkedKeyId => "alibaba_key_marked",
+                TreasureIds.LabsPassId => "alibaba_labs_pass",
                 _ => "alibaba_key",
             },
             Properties = props,
@@ -219,13 +234,14 @@ public class TreasureMod(
     }
 
     /// <summary>
-    /// Lets a treasure stand in for a map's entry key (Labs access keycard, Labrys keycard).
+    /// Lets the Labs pass stand in for the single-use Labs access keycard on every map that asks for
+    /// it (only The Lab in 4.1.6). The other treasures are deliberately not entry keys.
     /// </summary>
     /// <remarks>
-    /// The client reads one list for both checks: the main menu refuses the raid unless an equipped
-    /// item's template is in <c>AccessKeys</c>, and <c>BaseLocalGame</c> spends a use of that same
-    /// item when the raid starts (discarding it at its last use, never when uses are unlimited).
-    /// Adding the treasure's id to the list is therefore all it takes - the game counts the use.
+    /// The client reads one list for both checks: the main menu refuses the raid unless an equipped,
+    /// examined item's template is in <c>AccessKeys</c>, and <c>BaseLocalGame</c> spends a use of that
+    /// same item when the raid starts (removing it when the count reaches the maximum, never when
+    /// uses are unlimited). Adding the pass's id to the list is therefore all it takes (kb 2.37).
     /// </remarks>
     private List<string> AddRaidAccessKeys()
     {
@@ -250,7 +266,7 @@ public class TreasureMod(
         return maps;
     }
 
-    private IEnumerable<string>? Extend(IEnumerable<string>? accessKeys, ref bool changed)
+    private static IEnumerable<string>? Extend(IEnumerable<string>? accessKeys, ref bool changed)
     {
         if (accessKeys is null)
         {
@@ -258,40 +274,14 @@ public class TreasureMod(
         }
 
         var keys = accessKeys.ToList();
-        var additions = keys
-            .Select(TreasureFor)
-            .Where(id => id is not null && !keys.Contains(id))
-            .Distinct()
-            .ToList();
-        if (additions.Count == 0)
+        if (!keys.Contains(TreasureIds.LabsAccessKeycardId) || keys.Contains(TreasureIds.LabsPassId))
         {
             return accessKeys;
         }
 
         changed = true;
-        keys.AddRange(additions!);
+        keys.Add(TreasureIds.LabsPassId);
         return keys.ToArray();
-    }
-
-    /// <summary>Which treasure stands in for the key with template <paramref name="keyTemplateId"/>, if any.</summary>
-    private string? TreasureFor(string keyTemplateId)
-    {
-        if (!templates.Items.TryGetValue(new MongoId(keyTemplateId), out var template))
-        {
-            return null;
-        }
-
-        if (template.Parent == new MongoId(TreasureIds.KeycardParentId))
-        {
-            return TreasureIds.KeycardId;
-        }
-
-        if (template.Parent == new MongoId(TreasureIds.KeyParentId))
-        {
-            return TreasureIds.VanillaMarkedKeys.Contains(keyTemplateId) ? TreasureIds.MarkedKeyId : TreasureIds.KeyId;
-        }
-
-        return null;
     }
 
     /// <summary>

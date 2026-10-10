@@ -16,6 +16,12 @@ internal static class TreasureIds
     /// <summary>알리바바의 마크방 열쇠 — opens every marked-room lock.</summary>
     public const string MarkedKeyId = "6ac9e816c335dcd430ce50e6";
 
+    /// <summary>알리바바의 연구소 출입증 — enters the Labs again and again. Opens no doors.</summary>
+    public const string LabsPassId = "6ac9e816cf79c3a09f946579";
+
+    /// <summary>The vanilla single-use Labs entry card; maps that accept it also accept the pass.</summary>
+    public const string LabsAccessKeycardId = "5c94bbff86f7747ee735c08f";
+
     /// <summary>
     /// Object #11SR keycard (Interchange). Cloned for its card model, which is already in the
     /// client — nothing to ship.
@@ -27,6 +33,9 @@ internal static class TreasureIds
 
     /// <summary>Dorm room 314 marked key. Cloned for its marked-key model.</summary>
     public const string MarkedKeyCloneSource = "5780cf7f2459777de4559322";
+
+    /// <summary>TerraGroup Labs keycard (Black). Cloned for its black card model.</summary>
+    public const string LabsPassCloneSource = "5c1d0f4986f7744bb01837fa";
 
     /// <summary>
     /// The vanilla marked keys (4.1.6 database: every mechanical key whose English name contains
@@ -54,7 +63,7 @@ internal static class TreasureIds
     public const string RouteSet = "/alibabatreasure/settings/set";
 
     public static bool IsTreasure(string? templateId) =>
-        templateId == KeycardId || templateId == KeyId || templateId == MarkedKeyId;
+        templateId == KeycardId || templateId == KeyId || templateId == MarkedKeyId || templateId == LabsPassId;
 }
 
 /// <summary>
@@ -75,10 +84,12 @@ internal static class TreasureLimits
     public const int KeycardDefaultPrice = 5_000_000;
     public const int KeyDefaultPrice = 3_000_000;
     public const int MarkedKeyDefaultPrice = 8_000_000;
+    public const int LabsPassDefaultPrice = 2_000_000;
 
     public const int KeycardDefaultUses = 10;
     public const int KeyDefaultUses = 10;
     public const int MarkedKeyDefaultUses = 10;
+    public const int LabsPassDefaultUses = 10;
 
     public static int ClampPrice(int value) => value < PriceMin ? PriceMin : value > PriceMax ? PriceMax : value;
 

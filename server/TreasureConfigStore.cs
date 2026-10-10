@@ -85,6 +85,7 @@ public class TreasureConfigStore(ISptLogger<TreasureConfigStore> logger, ModHelp
                 Keycard = incoming.Keycard ?? previous.Keycard,
                 Key = incoming.Key ?? previous.Key,
                 MarkedKey = incoming.MarkedKey ?? previous.MarkedKey,
+                LabsPass = incoming.LabsPass ?? previous.LabsPass,
             }.Normalised();
 
             _current = applied;
