@@ -58,6 +58,7 @@ public class TreasureRuntime(
         ApplyItem(TreasureIds.KeyId, "key", previous.Key!, applied.Key!, changes);
         ApplyItem(TreasureIds.MarkedKeyId, "marked key", previous.MarkedKey!, applied.MarkedKey!, changes);
         ApplyItem(TreasureIds.LabsPassId, "labs pass", previous.LabsPass!, applied.LabsPass!, changes);
+        ApplyItem(TreasureIds.LabyrinthPassId, "labyrinth pass", previous.LabyrinthPass!, applied.LabyrinthPass!, changes);
         return changes;
     }
 

@@ -34,6 +34,9 @@ public record TreasureSettingsResponse
     [JsonPropertyName("labsPass")]
     public TreasureItemSettings? LabsPass { get; init; }
 
+    [JsonPropertyName("labyrinthPass")]
+    public TreasureItemSettings? LabyrinthPass { get; init; }
+
     /// <summary>Key templates the marked-room key opens (vanilla + modded "marked" keys).</summary>
     [JsonPropertyName("markedKeys")]
     public List<string>? MarkedKeys { get; init; }
@@ -81,6 +84,7 @@ public class TreasureRouter(JsonUtil jsonUtil, TreasureConfigStore store, Treasu
             Key = settings.Key,
             MarkedKey = settings.MarkedKey,
             LabsPass = settings.LabsPass,
+            LabyrinthPass = settings.LabyrinthPass,
             MarkedKeys = markedKeys,
         });
 

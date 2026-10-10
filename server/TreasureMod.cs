@@ -108,6 +108,19 @@ public class TreasureMod(
             + "들어갈 수 있다. 안에 있는 문은 하나도 열지 못한다.",
             TreasureIds.HandbookElectronicKeys,
             s => s.LabsPass!),
+        new(
+            TreasureIds.LabyrinthPassId,
+            TreasureIds.LabyrinthPassCloneSource,
+            "Ali Baba's Labyrinth Pass",
+            "알리바바의 래버린스 출입증",
+            "Ali Laby",
+            "알리 래버린스",
+            "A Labrys card the gatekeepers keep letting through. It gets you into the Labyrinth again "
+            + "and again, one entry per use. It opens no doors inside.",
+            "문지기들이 매번 통과시켜 주는 래브리스 카드. 쓸 때마다 한 번씩, 래버린스에 몇 번이고 들어갈 수 있다. "
+            + "안에 있는 문은 하나도 열지 못한다.",
+            TreasureIds.HandbookElectronicKeys,
+            s => s.LabyrinthPass!),
     ];
 
     public Task OnLoadAsync(CancellationToken cancellationToken = default)
@@ -135,7 +148,7 @@ public class TreasureMod(
         logger.Success(
             $"{LogPrefix} registered {registered.Count} item(s). "
             + $"Keycard {Describe(settings.Keycard!)} | Key {Describe(settings.Key!)} | Marked key {Describe(settings.MarkedKey!)} "
-            + $"| Labs pass {Describe(settings.LabsPass!)}. "
+            + $"| Labs pass {Describe(settings.LabsPass!)} | Labyrinth pass {Describe(settings.LabyrinthPass!)}. "
             + $"Raid entry accepted on: {(accessMaps.Count == 0 ? "-" : string.Join(", ", accessMaps))}. "
             + "Flea market only - spawn chances are 0% unless changed in F12.");
         return Task.CompletedTask;
@@ -195,6 +208,7 @@ public class TreasureMod(
                 TreasureIds.KeycardId => "alibaba_keycard",
                 TreasureIds.MarkedKeyId => "alibaba_key_marked",
                 TreasureIds.LabsPassId => "alibaba_labs_pass",
+                TreasureIds.LabyrinthPassId => "alibaba_labyrinth_pass",
                 _ => "alibaba_key",
             },
             Properties = props,
@@ -234,8 +248,9 @@ public class TreasureMod(
     }
 
     /// <summary>
-    /// Lets the Labs pass stand in for the single-use Labs access keycard on every map that asks for
-    /// it (only The Lab in 4.1.6). The other treasures are deliberately not entry keys.
+    /// Lets each pass stand in for its map's single-use entry card on every map that asks for it:
+    /// the Labs pass for the Labs access keycard (The Lab), the Labyrinth pass for the Labrys access
+    /// keycard (The Labyrinth). The other treasures are deliberately not entry keys.
     /// </summary>
     /// <remarks>
     /// The client reads one list for both checks: the main menu refuses the raid unless an equipped,
@@ -266,6 +281,12 @@ public class TreasureMod(
         return maps;
     }
 
+    private static readonly (string EntryCard, string Pass)[] Passes =
+    [
+        (TreasureIds.LabsAccessKeycardId, TreasureIds.LabsPassId),
+        (TreasureIds.LabyrinthAccessKeycardId, TreasureIds.LabyrinthPassId),
+    ];
+
     private static IEnumerable<string>? Extend(IEnumerable<string>? accessKeys, ref bool changed)
     {
         if (accessKeys is null)
@@ -274,13 +295,17 @@ public class TreasureMod(
         }
 
         var keys = accessKeys.ToList();
-        if (!keys.Contains(TreasureIds.LabsAccessKeycardId) || keys.Contains(TreasureIds.LabsPassId))
+        var additions = Passes
+            .Where(p => keys.Contains(p.EntryCard) && !keys.Contains(p.Pass))
+            .Select(p => p.Pass)
+            .ToList();
+        if (additions.Count == 0)
         {
             return accessKeys;
         }
 
         changed = true;
-        keys.Add(TreasureIds.LabsPassId);
+        keys.AddRange(additions);
         return keys.ToArray();
     }
 

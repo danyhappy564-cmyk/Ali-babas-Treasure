@@ -88,6 +88,7 @@ internal sealed class TreasureSettings
     public ItemEntries Key { get; }
     public ItemEntries MarkedKey { get; }
     public ItemEntries LabsPass { get; }
+    public ItemEntries LabyrinthPass { get; }
 
     public TreasureSettings(ConfigFile config)
     {
@@ -124,6 +125,11 @@ internal sealed class TreasureSettings
             "Labs entry only - one use per raid entered while it is equipped; opens no doors",
             TreasureLimits.LabsPassDefaultPrice, TreasureLimits.LabsPassDefaultUses);
 
+        LabyrinthPass = BindItem(config, "05. Labyrinth pass", "05. 알리바바의 래버린스 출입증", "05. Ali Baba's Labyrinth Pass",
+            "래버린스 입장만 — 장착하고 들어갈 때마다 1회씩 닳고, 문은 못 엽니다",
+            "Labyrinth entry only - one use per raid entered while it is equipped; opens no doors",
+            TreasureLimits.LabyrinthPassDefaultPrice, TreasureLimits.LabyrinthPassDefaultUses);
+
         ApplyLanguage();
         Language.SettingChanged += (_, _) => ApplyLanguage();
     }
@@ -153,8 +159,8 @@ internal sealed class TreasureSettings
             "Never breaks.",
             null,
             Attributes(categoryKo, categoryEn, "무제한 사용", "Unlimited uses",
-                "켜면 횟수 제한 없이 계속 씁니다. (이미 가지고 있는 아이템의 툴팁 표시는 게임을 다시 시작해야 바뀔 수 있습니다)",
-                "Never breaks. (The tooltip of a copy you already own may only update after a game restart.)",
+                "켜면 횟수 제한 없이 계속 씁니다. 툴팁의 남은 횟수 표시도 바로 '무제한'으로 바뀝니다.",
+                "Never breaks. The tooltip's uses line switches to 'unlimited' right away.",
                 40)));
 
         entries.LooseChance = BindChance(config, section, "Loose loot chance", categoryKo, categoryEn,

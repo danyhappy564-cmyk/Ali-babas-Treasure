@@ -22,6 +22,12 @@ internal static class TreasureIds
     /// <summary>The vanilla single-use Labs entry card; maps that accept it also accept the pass.</summary>
     public const string LabsAccessKeycardId = "5c94bbff86f7747ee735c08f";
 
+    /// <summary>알리바바의 래버린스 출입증 — enters the Labyrinth again and again. Opens no doors.</summary>
+    public const string LabyrinthPassId = "6ac9f13c4d094cf34ad4f8b4";
+
+    /// <summary>The vanilla single-use Labyrinth entry card (Labrys access keycard).</summary>
+    public const string LabyrinthAccessKeycardId = "679b9819a2f2dd4da9023512";
+
     /// <summary>
     /// Object #11SR keycard (Interchange). Cloned for its card model, which is already in the
     /// client — nothing to ship.
@@ -36,6 +42,9 @@ internal static class TreasureIds
 
     /// <summary>TerraGroup Labs keycard (Black). Cloned for its black card model.</summary>
     public const string LabsPassCloneSource = "5c1d0f4986f7744bb01837fa";
+
+    /// <summary>Labrys access keycard. Cloned for its Labyrinth card model.</summary>
+    public const string LabyrinthPassCloneSource = LabyrinthAccessKeycardId;
 
     /// <summary>
     /// The vanilla marked keys (4.1.6 database: every mechanical key whose English name contains
@@ -63,7 +72,10 @@ internal static class TreasureIds
     public const string RouteSet = "/alibabatreasure/settings/set";
 
     public static bool IsTreasure(string? templateId) =>
-        templateId == KeycardId || templateId == KeyId || templateId == MarkedKeyId || templateId == LabsPassId;
+        templateId == KeycardId || templateId == KeyId || templateId == MarkedKeyId || IsPass(templateId);
+
+    /// <summary>The entry passes: they count raid entries, not opened locks.</summary>
+    public static bool IsPass(string? templateId) => templateId == LabsPassId || templateId == LabyrinthPassId;
 }
 
 /// <summary>
@@ -85,11 +97,13 @@ internal static class TreasureLimits
     public const int KeyDefaultPrice = 3_000_000;
     public const int MarkedKeyDefaultPrice = 8_000_000;
     public const int LabsPassDefaultPrice = 2_000_000;
+    public const int LabyrinthPassDefaultPrice = 1_500_000;
 
     public const int KeycardDefaultUses = 10;
     public const int KeyDefaultUses = 10;
     public const int MarkedKeyDefaultUses = 10;
     public const int LabsPassDefaultUses = 10;
+    public const int LabyrinthPassDefaultUses = 10;
 
     public static int ClampPrice(int value) => value < PriceMin ? PriceMin : value > PriceMax ? PriceMax : value;
 

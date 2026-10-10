@@ -16,7 +16,7 @@ namespace AlibabaTreasure.Client;
 /// handled by the server's entry-key list), and is the F12 front end
 /// for the server mod's prices, uses and spawn chances.
 /// </summary>
-[BepInPlugin(PluginGuid, "Ali Baba's Treasure", "1.2.0")]
+[BepInPlugin(PluginGuid, "Ali Baba's Treasure", "1.3.0")]
 public class TreasurePlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.rf.alibabatreasure.client";
@@ -146,7 +146,8 @@ public class TreasurePlugin : BaseUnityPlugin
         var json = "{\"keycard\":" + _settings.Keycard.Read().ToJson()
             + ",\"key\":" + _settings.Key.Read().ToJson()
             + ",\"markedKey\":" + _settings.MarkedKey.Read().ToJson()
-            + ",\"labsPass\":" + _settings.LabsPass.Read().ToJson() + "}";
+            + ",\"labsPass\":" + _settings.LabsPass.Read().ToJson()
+            + ",\"labyrinthPass\":" + _settings.LabyrinthPass.Read().ToJson() + "}";
         ThreadPool.QueueUserWorkItem(_ =>
         {
             string? answer = null;
@@ -192,7 +193,8 @@ public class TreasurePlugin : BaseUnityPlugin
         var key = ItemValues.Parse(answer, "key");
         var markedKey = ItemValues.Parse(answer, "markedKey");
         var labsPass = ItemValues.Parse(answer, "labsPass");
-        if (keycard is null || key is null || markedKey is null || labsPass is null)
+        var labyrinthPass = ItemValues.Parse(answer, "labyrinthPass");
+        if (keycard is null || key is null || markedKey is null || labsPass is null || labyrinthPass is null)
         {
             return false;
         }
@@ -207,6 +209,7 @@ public class TreasurePlugin : BaseUnityPlugin
             _settings.Key.Write(key);
             _settings.MarkedKey.Write(markedKey);
             _settings.LabsPass.Write(labsPass);
+            _settings.LabyrinthPass.Write(labyrinthPass);
         }
         finally
         {
@@ -240,7 +243,8 @@ public class TreasurePlugin : BaseUnityPlugin
         var key = Tune(factory, TreasureIds.KeyId, _settings.Key.MaximumNumberOfUsage);
         var markedKey = Tune(factory, TreasureIds.MarkedKeyId, _settings.MarkedKey.MaximumNumberOfUsage);
         var labsPass = Tune(factory, TreasureIds.LabsPassId, _settings.LabsPass.MaximumNumberOfUsage);
-        if (keycard || key || markedKey || labsPass)
+        var labyrinthPass = Tune(factory, TreasureIds.LabyrinthPassId, _settings.LabyrinthPass.MaximumNumberOfUsage);
+        if (keycard || key || markedKey || labsPass || labyrinthPass)
         {
             _tunedFactory = factory;
             _usesDirty = false;
