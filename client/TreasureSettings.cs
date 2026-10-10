@@ -234,14 +234,18 @@ internal sealed class TreasureSettings
 
         entries.LooseChance = BindChance(config, section, "Loose loot chance", categoryKo, categoryEn,
             "맵 바닥 등장 확률 (%)", "Loose loot chance (%)",
-            "레이드 한 판마다 이 확률로 맵 어딘가의 바닥 루트 1개가 이 아이템으로 바뀝니다.",
-            "Each raid, with this chance one loose item somewhere on the map becomes this item.",
+            "열쇠·키카드가 나올 수 있는 바닥 자리(마크방 포함)에서 아이템이 정해질 때마다 이 확률로 이 아이템이 뽑힙니다(맵 루트 테이블에 가중치로 추가, LotsofLoot 방식). "
+            + "그런 자리는 한 판에 5~15번 정도라, 1%면 약 7~20판에 하나꼴입니다.",
+            "Each time a loose spot that can hold keys (marked rooms included) picks its item, this is the chance it picks this one "
+            + "(added to the map's loot table as a weight, like LotsofLoot). There are only ~5-15 such picks per raid: 1% is about one in 7-20 raids.",
             30);
 
         entries.ContainerChance = BindChance(config, section, "Container chance", categoryKo, categoryEn,
             "컨테이너 등장 확률 (%)", "Container chance (%)",
-            "레이드 한 판마다 이 확률로 컨테이너(상자·가방·금고·마크방 포함) 하나 안에 1개가 들어갑니다.",
-            "Each raid, with this chance one copy is placed in some container (crates, bags, safes, marked rooms included).",
+            "열쇠·키카드가 들어 있을 수 있는 컨테이너 종류(재킷·서랍·더플백·죽은 스캐브)가 한 칸을 채울 때마다 이 확률로 이 아이템이 뽑힙니다(LotsofLoot 방식). "
+            + "그런 칸이 한 판에 100~650개쯤이라 바닥보다 훨씬 자주 나옵니다: 0.1%면 약 2~10판에 하나, 1%면 한 판에 1~6개.",
+            "Each time a container type that can hold keys (jackets, drawers, duffle bags, dead scavs) fills a slot, this is the chance it is this item "
+            + "(like LotsofLoot). There are ~100-650 such slots per raid, so this is far more frequent than loose loot: 0.1% is about one in 2-10 raids, 1% is 1-6 per raid.",
             20);
 
         entries.BotChance = BindChance(config, section, "Bot carry chance", categoryKo, categoryEn,

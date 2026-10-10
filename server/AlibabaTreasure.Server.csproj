@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
 
-    <Version>1.4.0</Version>
+    <Version>1.5.0</Version>
     <Authors>R_F</Authors>
     <RootNamespace>AlibabaTreasure.Server</RootNamespace>
     <AssemblyName>AlibabaTreasure</AssemblyName>

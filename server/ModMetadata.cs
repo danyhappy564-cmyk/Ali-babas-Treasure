@@ -7,7 +7,7 @@ public record ModMetadata : IModMetadata
     public string ModGuid { get; init; } = "com.rf.alibabatreasure";
     public string Name { get; init; } = "Ali Baba's Treasure";
     public string Author { get; init; } = "R_F";
-    public SemanticVersioning.Version Version { get; init; } = new("1.4.0");
+    public SemanticVersioning.Version Version { get; init; } = new("1.5.0");
     public SemanticVersioning.Range SptVersion { get; init; } = new("~4.1.5");
     public string License { get; init; } = "MIT";
     public bool HasPrepatcher { get; init; }

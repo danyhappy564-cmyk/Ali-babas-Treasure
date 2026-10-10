@@ -16,7 +16,7 @@ namespace AlibabaTreasure.Client;
 /// handled by the server's entry-key list), and is the F12 front end
 /// for the server mod's prices, uses and spawn chances.
 /// </summary>
-[BepInPlugin(PluginGuid, "Ali Baba's Treasure", "1.4.0")]
+[BepInPlugin(PluginGuid, "Ali Baba's Treasure", "1.5.0")]
 public class TreasurePlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.rf.alibabatreasure.client";

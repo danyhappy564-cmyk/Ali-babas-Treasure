@@ -21,6 +21,7 @@ public class TreasureRuntime(
     TemplateTable templates,
     LocaleTable locales,
     BotGeneratorHelper botGeneratorHelper,
+    TreasurePools pools,
     RagfairOfferService ragfairOfferService,
     RagfairOfferGenerator ragfairOfferGenerator
 )
@@ -59,6 +60,16 @@ public class TreasureRuntime(
         ApplyItem(TreasureIds.MarkedKeyId, "marked key", previous.MarkedKey!, applied.MarkedKey!, changes);
         ApplyItem(TreasureIds.LabsPassId, "labs pass", previous.LabsPass!, applied.LabsPass!, changes);
         ApplyItem(TreasureIds.LabyrinthPassId, "labyrinth pass", previous.LabyrinthPass!, applied.LabyrinthPass!, changes);
+
+        var tablesChanged = TreasureSpawn.Items.Any(entry =>
+            entry.Settings(previous).LooseChance != entry.Settings(applied).LooseChance
+            || entry.Settings(previous).ContainerChance != entry.Settings(applied).ContainerChance);
+        if (tablesChanged)
+        {
+            pools.Refresh();
+            changes.Add("map loot tables rebuilt with the new chances (from the next raid)");
+        }
+
         return changes;
     }
 

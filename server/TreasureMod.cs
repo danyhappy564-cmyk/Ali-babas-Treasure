@@ -6,7 +6,6 @@ using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Tables;
 using SPTarkov.Server.Core.Services;
-using SPTarkov.Server.Core.Services.Items;
 
 namespace AlibabaTreasure.Server;
 
@@ -31,11 +30,11 @@ public class TreasureMod(
     ISptLogger<TreasureMod> logger,
     TreasureConfigStore configStore,
     TreasureRuntime runtime,
+    TreasurePools pools,
     TemplateTable templates,
     LocaleTable locales,
     LocationTable locationTable,
-    ItemConfig itemConfig,
-    ItemFilterService itemFilterService
+    ItemConfig itemConfig
 ) : IOnLoad
 {
     internal const string LogPrefix = "[AlibabaTreasure]";
@@ -142,6 +141,7 @@ public class TreasureMod(
         }
 
         Blacklist(registered);
+        pools.Register();
         var accessMaps = AddRaidAccessKeys();
         runtime.EnablePatches();
 
@@ -231,20 +231,19 @@ public class TreasureMod(
 
     /// <summary>
     /// Keeps the items out of everything that builds its pool from the whole item table: PMC
-    /// pocket/vest/backpack loot, fence, airdrops, the scav case and bot loot (kb: ItemFilterService
-    /// callers). The global <c>Blacklist</c> is deliberately NOT used - the flea assort reads it,
-    /// and the flea is the one place these items must appear.
+    /// pocket/vest/backpack loot, fence, airdrops and the scav case (kb 1.35). The global
+    /// <c>Blacklist</c> is deliberately NOT used - the flea assort reads it, and the flea is the one
+    /// place these items must appear. Nor is <c>LootableItemBlacklist</c> (1.5.0): the map loot
+    /// generator strips anything on it from loose spots and containers, which would cancel the
+    /// weighted entries <see cref="TreasurePools"/> adds. Map loot is controlled by those weights
+    /// alone - 0% adds no entry at all.
     /// </summary>
     private void Blacklist(List<MongoId> ids)
     {
         foreach (var id in ids)
         {
             itemConfig.RewardItemBlacklist.Add(id);
-            itemConfig.LootableItemBlacklist.Add(id);
         }
-
-        // The lootable list is cached when ItemFilterService is constructed; feed the cache too.
-        itemFilterService.AddItemToLootableBlacklistCache(ids);
     }
 
     /// <summary>
