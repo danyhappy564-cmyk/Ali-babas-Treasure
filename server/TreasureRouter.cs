@@ -66,6 +66,13 @@ public class TreasureRouter(JsonUtil jsonUtil, TreasureConfigStore store, Treasu
 
             var (previous, applied, saved) = store.Replace(request);
             var changes = runtime.Apply(previous, applied);
+            if (applied.Debug)
+            {
+                runtime.Logger.Info($"{TreasureMod.LogPrefix} [debug] settings from F12 applied: "
+                    + (changes.Count == 0 ? "nothing that needs a live update (chances apply next raid)" : string.Join(", ", changes))
+                    + $"; saved={saved}");
+            }
+
             return new ValueTask<string>(Respond(applied, changes, saved, runtime.MarkedKeyIds()));
         }
         catch (Exception ex)

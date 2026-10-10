@@ -8,6 +8,8 @@
 
 ## 변경 이력
 
+- 2026-10-10 17:26 — 1.4.0. F12 **디버그 모드** 추가(기본 꺼짐). 켜면 문·카드 리더·탈출 조건 판정, 사용 전후 남은 횟수, 서버와 주고받은 설정이 `BepInEx/LogOutput.log`에,
+  레이드마다 확률 굴림 결과(빗나감 / 당첨됐지만 자리 없음 / 배치됨)가 서버 로그에 남습니다. 테스트할 때 원인 찾기용.
 - 2026-10-10 17:08 — 1.3.1. F12 맨 위에 **"모든 등장 확률 0으로"** 버튼 추가 — 체크하면 5개 아이템의 바닥·컨테이너·봇 확률을 한 번에 0으로 되돌리고 체크는 저절로 풀립니다(가격·횟수는 그대로).
 - 2026-10-10 17:05 — 1.3.0. **알리바바의 래버린스 출입증** 추가(래브리스 카드 모델) — 래버린스에 여러 번 들어갈 수 있는 출입증(기본 10회, 문은 못 엶).
   **툴팁 개선**: 출입증은 "남은 입장 횟수 3/10회"로 표시, 모든 알리바바 아이템의 남은 횟수·무제한 표시가 F12 변경 즉시 바뀝니다(전에는 게임 재시작 필요).
@@ -73,6 +75,21 @@
 이 항목 이름은 언어와 관계없이 두 언어로 같이 써 있어서, 한국어로 되어 있어도 영어 사용자가 찾을 수 있습니다.
 같은 칸의 **`모든 등장 확률 0으로 · Reset spawn chances`** 를 체크하면 모든 아이템의 등장 확률이 0으로 돌아갑니다(체크는 저절로 풀림).
 
+### 디버그 모드 (테스트·문제 제보용)
+
+같은 칸의 **`디버그 모드 · Debug mode`** 를 켜면 로그에 판정 과정이 남습니다. 평소에는 꺼 두세요(켜 둬도 렉은 거의 없지만 로그가 길어집니다).
+
+| 어디에 | 무엇이 남나 (줄 앞머리) |
+|---|---|
+| `BepInEx/LogOutput.log` | `[Alibaba] Lock '…' wants …` — 잠금이 요구하는 열쇠, 대신 필요한 알리바바 아이템, 갖고 있는지 |
+| | `[Alibaba] Unlock '…' … accepted / rejected` 와 `-> after use 9/10 left` — 실제로 열었을 때 허용/거부, 사용 전후 남은 횟수, 다 써서 사라지는지 |
+| | `[Alibaba] Extract '…' wants …` — 탈출 조건을 알리바바 아이템으로 대신 인정했는지 |
+| | `[Alibaba] … max uses set to …`, `Sending settings…`, `Server answered…` — 횟수 적용, 서버와 주고받은 설정 |
+| 서버 콘솔/로그 | `[AlibabaTreasure] [debug] <맵>: <아이템> loose 0.5% -> miss` 등 — 레이드마다 확률 굴림 결과 |
+
+- 같은 문을 계속 보고 있을 때처럼 결과가 같으면 한 번만 남습니다.
+- 연구소·래버린스 입장 차감은 따로 로그를 남기지 않습니다 — 들어간 뒤 출입증 툴팁의 "남은 입장 횟수"로 확인하세요.
+
 아이템마다(`01. 알리바바의 키카드`, `02. 알리바바의 열쇠`, `03. 알리바바의 마크방 열쇠`, `04. 알리바바의 연구소 출입증`, `05. 알리바바의 래버린스 출입증`) 같은 6개 항목이 있습니다.
 출입증의 "사용 가능 횟수"는 곧 **입장 가능 횟수**입니다.
 
@@ -93,7 +110,7 @@
 
 ## 설치
 
-1. 서버 zip(`AlibabaTreasure-Server-1.3.1.zip`)과 클라 zip(`AlibabaTreasure-Client-1.3.1.zip`)을 `E:\SPT 4.1` 에 그대로 풀기
+1. 서버 zip(`AlibabaTreasure-Server-1.4.0.zip`)과 클라 zip(`AlibabaTreasure-Client-1.4.0.zip`)을 `E:\SPT 4.1` 에 그대로 풀기
    (zip 안 폴더 구조가 `SPT_Runtime\user\mods\...`, `BepInEx\plugins\...` 로 되어 있습니다).
 2. 서버를 한 번 켜면 `SPT_Runtime\user\mods\AlibabaTreasure\config\config.json` 이 만들어집니다.
 3. 서버 로그에 `[AlibabaTreasure] registered 5 item(s)` 와 `Raid entry accepted on: laboratory, labyrinth` 비슷한 줄이 보이면 정상입니다.
@@ -128,8 +145,8 @@
 ## 직접 빌드
 
 ```
-dotnet build server -c Release      # 서버 모드 + release\AlibabaTreasure-Server-1.3.1.zip
-dotnet build client -c Release      # 클라 플러그인 + release\AlibabaTreasure-Client-1.3.1.zip
+dotnet build server -c Release      # 서버 모드 + release\AlibabaTreasure-Server-1.4.0.zip
+dotnet build client -c Release      # 클라 플러그인 + release\AlibabaTreasure-Client-1.4.0.zip
 ```
 
 - 게임 경로는 기본 `E:\SPT 4.1` (`Directory.Build.props`). 다르면 `-p:SptRoot=경로` 또는 `local.props`.

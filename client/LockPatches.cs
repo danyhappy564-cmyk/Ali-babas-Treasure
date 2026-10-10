@@ -110,6 +110,16 @@ internal static class GetKeyPatch
                 .FirstOrDefault(key => key.Template != null
                     && TreasureIds.IsTreasure(key.Template.KeyId)
                     && TreasureLocks.Opens(key.Template.KeyId, worldInteractiveObject));
+
+            if (Dbg.On)
+            {
+                var wanted = worldInteractiveObject is KeycardDoor
+                    ? TreasureIds.KeycardId
+                    : TreasureLocks.TreasureFor(worldInteractiveObject.KeyId, unknownIsKey: true);
+                Dbg.Once("lock", $"Lock '{worldInteractiveObject.Id}' wants {Dbg.Name(worldInteractiveObject.KeyId)}, no real key on you. "
+                    + $"Stand-in: {Dbg.Name(wanted)} -> "
+                    + (__result != null ? "carried, Unlock offered" : "not carried, stays locked"));
+            }
         }
         catch (Exception ex)
         {
@@ -142,14 +152,32 @@ internal static class UnlockSwap
         {
             __state = __instance.KeyId;
             __instance.KeyId = treasureId;
+            Dbg.Log($"Unlock '{__instance.Id}' (wants {Dbg.Name(__state)}) with {Dbg.Name(treasureId)}: accepted, "
+                + $"before use {Dbg.Uses(key!.NumberOfUsages, key.Template.MaximumNumberOfUsage)}");
+        }
+        else
+        {
+            Dbg.Log($"Unlock '{__instance.Id}' (wants {Dbg.Name(__instance.KeyId)}) with {Dbg.Name(treasureId)}: "
+                + "rejected - this treasure does not open this lock");
         }
     }
 
-    public static void Finalizer(WorldInteractiveObject __instance, string? __state)
+    public static void Finalizer(WorldInteractiveObject __instance, KeyComponent key, string? __state, Exception? __exception)
     {
-        if (__state != null)
+        if (__state == null)
         {
-            __instance.KeyId = __state;
+            return;
+        }
+
+        __instance.KeyId = __state;
+
+        if (Dbg.On && key?.Template != null)
+        {
+            var maximum = key.Template.MaximumNumberOfUsage;
+            var spent = maximum > 0 && key.NumberOfUsages >= maximum;
+            Dbg.Log($"  -> after use {Dbg.Uses(key.NumberOfUsages, maximum)}"
+                + (spent ? ", used up (the game removes it)" : "")
+                + (__exception != null ? $", game threw: {__exception.Message}" : ""));
         }
     }
 }
@@ -163,8 +191,8 @@ internal static class WorldInteractiveObjectUnlockPatch
         UnlockSwap.Prefix(__instance, key, ref __state);
 
     [HarmonyFinalizer]
-    private static void Finalizer(WorldInteractiveObject __instance, string? __state) =>
-        UnlockSwap.Finalizer(__instance, __state);
+    private static void Finalizer(WorldInteractiveObject __instance, KeyComponent key, string? __state, Exception? __exception) =>
+        UnlockSwap.Finalizer(__instance, key, __state, __exception);
 }
 
 /// <summary>
@@ -180,8 +208,8 @@ internal static class KeycardDoorUnlockPatch
         UnlockSwap.Prefix(__instance, key, ref __state);
 
     [HarmonyFinalizer]
-    private static void Finalizer(WorldInteractiveObject __instance, string? __state) =>
-        UnlockSwap.Finalizer(__instance, __state);
+    private static void Finalizer(WorldInteractiveObject __instance, KeyComponent key, string? __state, Exception? __exception) =>
+        UnlockSwap.Finalizer(__instance, key, __state, __exception);
 }
 
 /// <summary>
@@ -193,7 +221,7 @@ internal static class KeycardDoorUnlockPatch
 internal static class ExfilHasItemPatch
 {
     [HarmonyPostfix]
-    private static void Postfix(HasItemRequirement __instance, Player player, ref bool __result)
+    private static void Postfix(HasItemRequirement __instance, Player player, ExfiltrationPoint point, ref bool __result)
     {
         if (__result || player?.Profile?.Inventory is null)
         {
@@ -203,10 +231,18 @@ internal static class ExfilHasItemPatch
         try
         {
             var treasure = TreasureLocks.TreasureFor(__instance.Id, unknownIsKey: false);
-            if (treasure != null && player.Profile.Inventory.GetAllItemByTemplate(treasure).Any())
+            if (treasure == null)
+            {
+                return;
+            }
+
+            if (player.Profile.Inventory.GetAllItemByTemplate(treasure).Any())
             {
                 __result = true;
             }
+
+            Dbg.Once("exfil:" + __instance.Id, $"Extract '{point?.Settings?.Name}' wants {Dbg.Name(__instance.Id)}, not carried. "
+                + $"Stand-in {Dbg.Name(treasure)}: {(__result ? "carried, requirement met" : "not carried, requirement not met")}");
         }
         catch (Exception ex)
         {

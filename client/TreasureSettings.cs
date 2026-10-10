@@ -85,6 +85,7 @@ internal sealed class TreasureSettings
 
     public ConfigEntry<string> Language { get; }
     public ConfigEntry<bool> ResetChances { get; }
+    public ConfigEntry<bool> Debug { get; }
     public ItemEntries Keycard { get; }
     public ItemEntries Key { get; }
     public ItemEntries MarkedKey { get; }
@@ -145,6 +146,23 @@ internal sealed class TreasureSettings
                     "Tick to set the loose, container and bot chances of every item back to 0 (never). It unticks itself.\n"
                     + "Prices, uses and unlimited are left alone.",
                     90)));
+
+        Debug = config.Bind(
+            "00. Language",
+            "Debug mode",
+            false,
+            new ConfigDescription(
+                "Writes [Alibaba] lines to BepInEx/LogOutput.log explaining every decision.",
+                null,
+                Attributes("00. Language · 언어", "00. Language · 언어",
+                    "디버그 모드 · Debug mode", "Debug mode · 디버그 모드",
+                    "켜면 BepInEx/LogOutput.log 에 [Alibaba] 로 시작하는 줄을 남깁니다: 잠금이 요구하는 열쇠와 필요한 알리바바 아이템, "
+                    + "허용/거부, 사용 전후 남은 횟수, 탈출 조건 판정, 서버와 주고받은 설정. "
+                    + "서버 쪽도 레이드마다 확률 굴림 결과를 서버 로그에 남깁니다. 테스트가 끝나면 끄세요.",
+                    "Writes [Alibaba] lines to BepInEx/LogOutput.log: which key a lock wants and which treasure stands in, "
+                    + "accepted/rejected, uses before and after, extract requirement results, settings exchanged with the server. "
+                    + "The server also logs every spawn roll per raid. Turn it off when you are done testing.",
+                    80)));
 
         // A tick left in the .cfg (game closed mid-click) must not wipe the chances on the next start.
         ResetChances.Value = false;

@@ -16,7 +16,7 @@ namespace AlibabaTreasure.Client;
 /// handled by the server's entry-key list), and is the F12 front end
 /// for the server mod's prices, uses and spawn chances.
 /// </summary>
-[BepInPlugin(PluginGuid, "Ali Baba's Treasure", "1.3.1")]
+[BepInPlugin(PluginGuid, "Ali Baba's Treasure", "1.4.0")]
 public class TreasurePlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.rf.alibabatreasure.client";
@@ -49,6 +49,12 @@ public class TreasurePlugin : BaseUnityPlugin
     {
         Log = Logger;
         _settings = new TreasureSettings(Config);
+        Dbg.On = _settings.Debug.Value;
+        _settings.Debug.SettingChanged += (_, _) =>
+        {
+            Dbg.On = _settings.Debug.Value;
+            Logger.LogInfo($"Debug mode {(Dbg.On ? "on" : "off")}.");
+        };
 
         Config.SettingChanged += (_, args) =>
         {
@@ -120,6 +126,13 @@ public class TreasurePlugin : BaseUnityPlugin
                 {
                     _synced = true;
                     Logger.LogInfo("Settings loaded from the server.");
+                    Dbg.Log("Server answered: " + answer);
+
+                    // The debug flag is this client's, not the server's: the server may still have last
+                    // session's value saved. Send once so its spawn-roll lines follow this toggle. The
+                    // other values were just copied from the server, so nothing else changes.
+                    _sendAt = Time.realtimeSinceStartup + SendDelaySeconds;
+
                     return;
                 }
 
@@ -147,7 +160,9 @@ public class TreasurePlugin : BaseUnityPlugin
             + ",\"key\":" + _settings.Key.Read().ToJson()
             + ",\"markedKey\":" + _settings.MarkedKey.Read().ToJson()
             + ",\"labsPass\":" + _settings.LabsPass.Read().ToJson()
-            + ",\"labyrinthPass\":" + _settings.LabyrinthPass.Read().ToJson() + "}";
+            + ",\"labyrinthPass\":" + _settings.LabyrinthPass.Read().ToJson()
+            + ",\"debug\":" + (_settings.Debug.Value ? "true" : "false") + "}";
+        Dbg.Log("Sending settings to the server: " + json);
         ThreadPool.QueueUserWorkItem(_ =>
         {
             string? answer = null;
@@ -167,6 +182,7 @@ public class TreasurePlugin : BaseUnityPlugin
                 if (answer != null && Absorb(answer))
                 {
                     _synced = true;
+                    Dbg.Log("Server answered: " + answer);
                 }
                 else
                 {
@@ -199,7 +215,9 @@ public class TreasurePlugin : BaseUnityPlugin
             return false;
         }
 
-        TreasureLocks.AddMarkedKeys(ItemValues.ParseIdList(answer, "markedKeys"));
+        var markedKeys = ItemValues.ParseIdList(answer, "markedKeys");
+        TreasureLocks.AddMarkedKeys(markedKeys);
+        Dbg.Once("marked", $"Marked-room key covers {markedKeys.Length} key(s): {string.Join(", ", markedKeys)}");
 
         // Values written here came from the server - do not echo them back.
         _suppress = true;
@@ -255,10 +273,12 @@ public class TreasurePlugin : BaseUnityPlugin
     {
         if (!factory.ItemTemplates.TryGetValue(id, out var template) || template is not KeyTemplate keyTemplate)
         {
+            Dbg.Once("tune:" + id, $"Template {id} not in the client's item table yet (server mod missing or still loading).");
             return false;
         }
 
         keyTemplate.MaximumNumberOfUsage = maximumUses;
+        Dbg.Once("tune:" + id, $"{Dbg.Name(id)}: max uses set to {(maximumUses == 0 ? "unlimited" : maximumUses.ToString())}");
         return true;
     }
 }

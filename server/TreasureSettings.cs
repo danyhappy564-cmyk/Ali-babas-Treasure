@@ -96,6 +96,10 @@ public record TreasureSettings : IRequestData
     [JsonPropertyName("labyrinthPass")]
     public TreasureItemSettings? LabyrinthPass { get; set; }
 
+    /// <summary>F12 "Debug mode": log every spawn roll and settings change to the server console.</summary>
+    [JsonPropertyName("debug")]
+    public bool Debug { get; set; }
+
     /// <summary>
     /// Fills a missing block with defaults and clamps every number into range. An older config
     /// without a <c>markedKey</c> (1.0.0) or <c>labsPass</c> (1.1.0) or <c>labyrinthPass</c> (1.2.0) block simply gets the defaults.
@@ -107,6 +111,7 @@ public record TreasureSettings : IRequestData
         MarkedKey = (MarkedKey ?? TreasureItemSettings.DefaultMarkedKey()).Normalised(),
         LabsPass = (LabsPass ?? TreasureItemSettings.DefaultLabsPass()).Normalised(),
         LabyrinthPass = (LabyrinthPass ?? TreasureItemSettings.DefaultLabyrinthPass()).Normalised(),
+        Debug = Debug,
     };
 
     public static TreasureSettings Defaults() => new TreasureSettings().Normalised();

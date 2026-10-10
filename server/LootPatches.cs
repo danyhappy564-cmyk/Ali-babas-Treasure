@@ -77,16 +77,8 @@ public class LocationLootPatch() : AbstractPatch("AlibabaTreasure.LocationLoot")
             {
                 var item = select(settings);
                 var template = new MongoId(id);
-
-                if (TreasureSpawn.Roll(item.LooseChance) && PlaceLoose(__result, template))
-                {
-                    Log($"{id} placed as loose loot on {locationId}");
-                }
-
-                if (TreasureSpawn.Roll(item.ContainerChance) && PlaceInContainer(__result, template))
-                {
-                    Log($"{id} placed in a container on {locationId}");
-                }
+                Roll(settings.Debug, locationId, id, "loose", item.LooseChance, () => PlaceLoose(__result, template));
+                Roll(settings.Debug, locationId, id, "container", item.ContainerChance, () => PlaceInContainer(__result, template));
             }
         }
         catch (Exception ex)
@@ -96,6 +88,34 @@ public class LocationLootPatch() : AbstractPatch("AlibabaTreasure.LocationLoot")
     }
 
     private static void Log(string message) => TreasureRuntime.Instance?.Logger.Info($"{TreasureMod.LogPrefix} {message}");
+
+    /// <summary>One chance roll. A hit is always logged; with debug on, misses and "no free spot" too.</summary>
+    private static void Roll(bool debug, string locationId, string id, string kind, double chance, Func<bool> place)
+    {
+        if (chance <= 0)
+        {
+            return;
+        }
+
+        if (!TreasureSpawn.Roll(chance))
+        {
+            if (debug)
+            {
+                Log($"[debug] {locationId}: {id} {kind} {chance}% -> miss");
+            }
+
+            return;
+        }
+
+        if (place())
+        {
+            Log($"{id} placed as {kind} loot on {locationId} ({chance}%)");
+        }
+        else
+        {
+            Log($"[debug] {locationId}: {id} {kind} {chance}% -> hit, but no swappable 1x1 item found");
+        }
+    }
 
     private static bool PlaceLoose(List<SpawnpointTemplate> loot, MongoId template)
     {
@@ -223,6 +243,10 @@ public class BotLootPatch() : AbstractPatch("AlibabaTreasure.BotLoot")
                 if (result == ItemAddedResult.SUCCESS)
                 {
                     runtime.Logger.Info($"{TreasureMod.LogPrefix} {id} given to a {botGenerationDetails.Role} bot");
+                }
+                else if (settings.Debug)
+                {
+                    runtime.Logger.Info($"{TreasureMod.LogPrefix} [debug] {id} rolled for a {botGenerationDetails.Role} bot but not added: {result}");
                 }
             }
         }
