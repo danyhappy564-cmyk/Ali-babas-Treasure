@@ -1,0 +1,10 @@
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+.idea/
+
+# Machine-local build settings (SptRoot)
+local.props
+release/

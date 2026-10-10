@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/client/">
+    <Project Path="client/AlibabaTreasure.Client.csproj" />
+  </Folder>
+  <Folder Name="/server/">
+    <Project Path="server/AlibabaTreasure.Server.csproj" />
+  </Folder>
+</Solution>

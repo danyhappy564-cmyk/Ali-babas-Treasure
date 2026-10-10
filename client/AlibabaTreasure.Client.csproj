@@ -1,0 +1,106 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- netstandard2.1 is what SPT 4.1 client plugins target (the server side is net10.0). -->
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <Version>1.0.0</Version>
+    <Authors>R_F</Authors>
+    <Product>AlibabaTreasure.Client</Product>
+    <Description>Ali Baba's Treasure: lets the master keycard/key open locks, and is the F12 front end for the server mod.</Description>
+    <RootNamespace>AlibabaTreasure.Client</RootNamespace>
+    <AssemblyName>AlibabaTreasure.Client</AssemblyName>
+
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\TreasureIds.cs" Link="TreasureIds.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(SptRoot)\BepInEx\core\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(SptRoot)\BepInEx\core\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <!-- EFT itself. Every type and member patched here (WorldInteractiveObject, KeycardDoor,
+         PlayerOwner.GetKey, KeyTemplate) is public in the deobfuscated 4.1 assembly, so no
+         publicised build or spt-reflection is needed; Harmony comes straight from BepInEx. -->
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- PlayerOwner derives from Odin's SerializedMonoBehaviour, so patching it needs this at compile time. -->
+    <Reference Include="Sirenix.Serialization">
+      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\Sirenix.Serialization.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ItemComponent.Types">
+      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Comfort">
+      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine">
+      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(SptRoot)\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!--
+    Drop the plugin into BepInEx\plugins. Windows-only for the same reason as the server project;
+    -p:OS=Windows_NT forces it, -p:SkipDeploy=true skips it.
+  -->
+  <Target Name="DeployToSpt" AfterTargets="Build"
+          Condition="'$(OS)' == 'Windows_NT' AND '$(SkipDeploy)' != 'true' AND '$(SptPluginsDir)' != '' AND '$(SptRoot)' != 'CHANGE_ME'">
+    <PropertyGroup>
+      <PluginDeployDir>$(SptPluginsDir)\AlibabaTreasure\</PluginDeployDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(PluginDeployDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginDeployDir)"
+          SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
+    <Message Text="Deployed $(TargetFileName) to $(PluginDeployDir)" Importance="high" />
+  </Target>
+
+
+  <!--
+    Rule 2-2: every Release build also drops a ready-to-ship archive in release/.
+    Skip with -p:SkipPackage=true.
+  -->
+  <Target Name="PackageRelease" AfterTargets="Build"
+          Condition="'$(Configuration)' == 'Release' AND '$(SkipPackage)' != 'true'">
+    <PropertyGroup>
+      <PackageStageDir>$(IntermediateOutputPath)package\</PackageStageDir>
+      <PackageZipDir>$(MSBuildThisFileDirectory)release\</PackageZipDir>
+      <PackageZipPath>$(PackageZipDir)AlibabaTreasure-Client-$(Version).zip</PackageZipPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <PackageFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.deps.json" />
+    </ItemGroup>
+    <RemoveDir Directories="$(PackageStageDir)" />
+    <Copy SourceFiles="@(PackageFiles)"
+          DestinationFiles="@(PackageFiles->'$(PackageStageDir)BepInEx\plugins\AlibabaTreasure\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <MakeDir Directories="$(PackageZipDir)" />
+    <Delete Files="$(PackageZipPath)" />
+    <ZipDirectory SourceDirectory="$(PackageStageDir)" DestinationFile="$(PackageZipPath)" Overwrite="true" />
+    <Message Text="Packaged $(PackageZipPath)" Importance="high" />
+  </Target>
+
+</Project>
