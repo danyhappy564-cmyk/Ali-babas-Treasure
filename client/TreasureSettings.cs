@@ -86,6 +86,7 @@ internal sealed class TreasureSettings
     public ConfigEntry<string> Language { get; }
     public ItemEntries Keycard { get; }
     public ItemEntries Key { get; }
+    public ItemEntries MarkedKey { get; }
 
     public TreasureSettings(ConfigFile config)
     {
@@ -103,14 +104,19 @@ internal sealed class TreasureSettings
                     100)));
 
         Keycard = BindItem(config, "01. Keycard", "01. 알리바바의 키카드", "01. Ali Baba's Keycard",
-            "카드 리더가 달린 모든 문(랩스 색깔 문, 창고 등)과 키카드가 필요한 모든 잠금",
-            "every card-reader door (Labs colour doors, storage rooms, ...) and every lock that takes a keycard",
+            "카드 리더가 달린 모든 문(랩스 색깔 문, 창고 등), 키카드가 필요한 모든 잠금·탈출구, 랩스(연구소)·래버린스 입장",
+            "every card-reader door (Labs colour doors, storage rooms, ...), every lock or extract that takes a keycard, Labs and Labyrinth entry",
             TreasureLimits.KeycardDefaultPrice, TreasureLimits.KeycardDefaultUses);
 
         Key = BindItem(config, "02. Key", "02. 알리바바의 열쇠", "02. Ali Baba's Key",
-            "모든 기계식 자물쇠(마크방 포함 일반 문·차 트렁크·잠긴 상자 등)",
-            "every mechanical lock (doors incl. marked rooms, car trunks, locked crates, ...)",
+            "마크방을 뺀 모든 기계식 자물쇠(일반 문·차 트렁크·잠긴 상자·스위치)와 열쇠가 필요한 탈출구",
+            "every mechanical lock except marked rooms (doors, car trunks, locked crates, switches) and every extract that needs a key",
             TreasureLimits.KeyDefaultPrice, TreasureLimits.KeyDefaultUses);
+
+        MarkedKey = BindItem(config, "03. Marked key", "03. 알리바바의 마크방 열쇠", "03. Ali Baba's Marked Key",
+            "모든 마크방(세관 기숙사 314, 리저브 RB-BK/VO/PKPM, 등대, 시내 2곳, 이름에 'marked'가 붙은 모드 열쇠의 방까지). 다른 문은 못 엽니다",
+            "every marked room (Customs dorm 314, Reserve RB-BK/VO/PKPM, Lighthouse, two on Streets, and any modded key named 'marked'). Opens nothing else",
+            TreasureLimits.MarkedKeyDefaultPrice, TreasureLimits.MarkedKeyDefaultUses);
 
         ApplyLanguage();
         Language.SettingChanged += (_, _) => ApplyLanguage();

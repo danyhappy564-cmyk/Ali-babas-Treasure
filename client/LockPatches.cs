@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Comfort.Common;
 using EFT;
@@ -8,13 +9,63 @@ using HarmonyLib;
 
 namespace AlibabaTreasure.Client;
 
-/// <summary>Decides which locks a treasure opens.</summary>
+/// <summary>Decides which locks and requirements a treasure stands in for.</summary>
 internal static class TreasureLocks
 {
+    private static readonly HashSet<string> MarkedKeys = new(TreasureIds.VanillaMarkedKeys);
+
+    /// <summary>Adds the marked keys the server found (modded keys named "marked" included).</summary>
+    public static void AddMarkedKeys(IEnumerable<string> ids)
+    {
+        foreach (var id in ids)
+        {
+            MarkedKeys.Add(id);
+        }
+    }
+
     /// <summary>
-    /// The keycard opens card readers (<see cref="KeycardDoor"/>) and any other lock whose key is a
-    /// keycard; the key opens every lock whose key is a mechanical key. A lock whose key template
-    /// cannot be looked up is treated as mechanical.
+    /// Which treasure stands in for the key with template <paramref name="keyTemplateId"/>:
+    /// keycards → the keycard, marked keys → the marked-room key, any other mechanical key → the key.
+    /// Null when the template is not a key at all (an exfil asking for a red rebel, say), or when it
+    /// cannot be looked up and <paramref name="unknownIsKey"/> is false.
+    /// </summary>
+    public static string? TreasureFor(string? keyTemplateId, bool unknownIsKey)
+    {
+        if (string.IsNullOrEmpty(keyTemplateId) || TreasureIds.IsTreasure(keyTemplateId))
+        {
+            return null;
+        }
+
+        if (MarkedKeys.Contains(keyTemplateId!))
+        {
+            return TreasureIds.MarkedKeyId;
+        }
+
+        try
+        {
+            if (Singleton<ItemFactory>.Instantiated
+                && Singleton<ItemFactory>.Instance.ItemTemplates.TryGetValue(keyTemplateId, out var template))
+            {
+                return template switch
+                {
+                    KeycardTemplate => TreasureIds.KeycardId,
+                    KeyTemplate => TreasureIds.KeyId,
+                    _ => null,
+                };
+            }
+        }
+        catch (Exception)
+        {
+            // fall through to the unknown case
+        }
+
+        return unknownIsKey ? TreasureIds.KeyId : null;
+    }
+
+    /// <summary>
+    /// Card readers (<see cref="KeycardDoor"/>) take the keycard. Any other lock takes whichever
+    /// treasure stands in for its key; a lock whose key template is unknown is treated as an
+    /// ordinary mechanical lock.
     /// </summary>
     public static bool Opens(string treasureId, WorldInteractiveObject? lockObject)
     {
@@ -23,22 +74,10 @@ internal static class TreasureLocks
             return false;
         }
 
-        var wantsKeycard = lockObject is KeycardDoor || NeedsKeycard(lockObject.KeyId);
-        return treasureId == (wantsKeycard ? TreasureIds.KeycardId : TreasureIds.KeyId);
-    }
-
-    private static bool NeedsKeycard(string keyId)
-    {
-        try
-        {
-            return Singleton<ItemFactory>.Instantiated
-                && Singleton<ItemFactory>.Instance.ItemTemplates.TryGetValue(keyId, out var template)
-                && template is KeycardTemplate;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
+        var wanted = lockObject is KeycardDoor
+            ? TreasureIds.KeycardId
+            : TreasureFor(lockObject.KeyId, unknownIsKey: true);
+        return treasureId == wanted;
     }
 }
 
@@ -143,4 +182,69 @@ internal static class KeycardDoorUnlockPatch
     [HarmonyFinalizer]
     private static void Finalizer(WorldInteractiveObject __instance, string? __state) =>
         UnlockSwap.Finalizer(__instance, __state);
+}
+
+/// <summary>
+/// Extracts that need a key or keycard on you. <c>HasItemRequirement.Met</c> (is the required
+/// item anywhere in your inventory) also passes when you carry the treasure that stands in for
+/// it. Nothing is spent - the vanilla requirement does not spend the real key either.
+/// </summary>
+[HarmonyPatch(typeof(HasItemRequirement), nameof(HasItemRequirement.Met))]
+internal static class ExfilHasItemPatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(HasItemRequirement __instance, Player player, ref bool __result)
+    {
+        if (__result || player?.Profile?.Inventory is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var treasure = TreasureLocks.TreasureFor(__instance.Id, unknownIsKey: false);
+            if (treasure != null && player.Profile.Inventory.GetAllItemByTemplate(treasure).Any())
+            {
+                __result = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            TreasurePlugin.Log?.LogWarning($"Exfil requirement check failed: {ex.Message}");
+        }
+    }
+}
+
+/// <summary>
+/// While you stand in an extract zone, the game re-checks its item requirement only when an item
+/// that "affects" it is added or removed. Treat the stand-in treasure as affecting it too, so
+/// picking one up (or dropping it) inside the zone updates the extract like the real key would.
+/// </summary>
+internal static class ExfilItemEvent
+{
+    public static void Check(InventoryRequirements requirement, Item? item, ref bool result)
+    {
+        var template = item?.StringTemplateId;
+        if (!result && TreasureIds.IsTreasure(template)
+            && TreasureLocks.TreasureFor(requirement.Id, unknownIsKey: false) == template)
+        {
+            result = true;
+        }
+    }
+}
+
+[HarmonyPatch(typeof(InventoryRequirements), nameof(InventoryRequirements.AddOperationAffectRequirement))]
+internal static class ExfilItemAddedPatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(InventoryRequirements __instance, AddItemEventArgs args, ref bool __result) =>
+        ExfilItemEvent.Check(__instance, args?.Item, ref __result);
+}
+
+[HarmonyPatch(typeof(InventoryRequirements), nameof(InventoryRequirements.RemoveOperationAffectRequirement))]
+internal static class ExfilItemRemovedPatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(InventoryRequirements __instance, RemoveItemEventArgs args, ref bool __result) =>
+        ExfilItemEvent.Check(__instance, args?.Item, ref __result);
 }

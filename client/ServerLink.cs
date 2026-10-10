@@ -123,6 +123,25 @@ internal sealed class ItemValues
         };
     }
 
+    /// <summary>Reads the <c>"markedKeys": [ ... ]</c> id list out of the server's answer.</summary>
+    public static string[] ParseIdList(string json, string name)
+    {
+        var block = Regex.Match(json, "\"" + name + "\"\\s*:\\s*\\[([^\\]]*)\\]");
+        if (!block.Success)
+        {
+            return Array.Empty<string>();
+        }
+
+        var ids = Regex.Matches(block.Groups[1].Value, "\"([0-9a-fA-F]{24})\"");
+        var result = new string[ids.Count];
+        for (var i = 0; i < ids.Count; i++)
+        {
+            result[i] = ids[i].Groups[1].Value;
+        }
+
+        return result;
+    }
+
     private static double Number(string body, string field)
     {
         var match = Regex.Match(body, "\"" + field + "\"\\s*:\\s*(-?[0-9.eE+]+)");

@@ -10,17 +10,39 @@ internal static class TreasureIds
     /// <summary>알리바바의 키카드 — opens every keycard lock.</summary>
     public const string KeycardId = "6ac9e816b4dcb655250d58d7";
 
-    /// <summary>알리바바의 열쇠 — opens every mechanical lock (marked rooms included).</summary>
+    /// <summary>알리바바의 열쇠 — opens every mechanical lock except marked rooms.</summary>
     public const string KeyId = "6ac9e816d3ccc02f796d0218";
 
+    /// <summary>알리바바의 마크방 열쇠 — opens every marked-room lock.</summary>
+    public const string MarkedKeyId = "6ac9e816c335dcd430ce50e6";
+
     /// <summary>
-    /// TerraGroup Labs keycard (Yellow). Cloned for its golden card model, which is already in
-    /// the client — nothing to ship.
+    /// Object #11SR keycard (Interchange). Cloned for its card model, which is already in the
+    /// client — nothing to ship.
     /// </summary>
-    public const string KeycardCloneSource = "5c1d0d6d86f7744bb2683e1f";
+    public const string KeycardCloneSource = "5e42c81886f7742a01529f57";
+
+    /// <summary>Kiba Arms outer door key. Cloned for its plain-key model.</summary>
+    public const string KeyCloneSource = "5ad5d7d286f77450166e0a89";
 
     /// <summary>Dorm room 314 marked key. Cloned for its marked-key model.</summary>
-    public const string KeyCloneSource = "5780cf7f2459777de4559322";
+    public const string MarkedKeyCloneSource = "5780cf7f2459777de4559322";
+
+    /// <summary>
+    /// The vanilla marked keys (4.1.6 database: every mechanical key whose English name contains
+    /// "marked"). The server adds any modded key named the same way at run time; this list is the
+    /// fallback the client uses until the server has answered.
+    /// </summary>
+    public static readonly string[] VanillaMarkedKeys =
+    {
+        "5780cf7f2459777de4559322", // Dorm room 314 marked key
+        "5d80c60f86f77440373c4ece", // RB-BK marked key
+        "5d80c62a86f7744036212b3f", // RB-VO marked key
+        "5ede7a8229445733cb4c18e2", // RB-PKPM marked key
+        "62987dfc402c7f69bf010923", // Shared bedroom marked key (Lighthouse)
+        "63a3a93f8a56922e82001f5d", // Abandoned factory marked key
+        "64ccc25f95763a1ae376e447", // Mysterious room marked key
+    };
 
     public const string KeycardParentId = "5c164d2286f774194c5e69fa";
     public const string KeyParentId = "5c99f98d86f7745c314214b3";
@@ -31,7 +53,8 @@ internal static class TreasureIds
     public const string RouteGet = "/alibabatreasure/settings/get";
     public const string RouteSet = "/alibabatreasure/settings/set";
 
-    public static bool IsTreasure(string? templateId) => templateId == KeycardId || templateId == KeyId;
+    public static bool IsTreasure(string? templateId) =>
+        templateId == KeycardId || templateId == KeyId || templateId == MarkedKeyId;
 }
 
 /// <summary>
@@ -50,10 +73,12 @@ internal static class TreasureLimits
     public const double ChanceMax = 100;
 
     public const int KeycardDefaultPrice = 5_000_000;
-    public const int KeyDefaultPrice = 6_000_000;
+    public const int KeyDefaultPrice = 3_000_000;
+    public const int MarkedKeyDefaultPrice = 8_000_000;
 
     public const int KeycardDefaultUses = 10;
     public const int KeyDefaultUses = 10;
+    public const int MarkedKeyDefaultUses = 10;
 
     public static int ClampPrice(int value) => value < PriceMin ? PriceMin : value > PriceMax ? PriceMax : value;
 

@@ -27,6 +27,13 @@ public record TreasureSettingsResponse
 
     [JsonPropertyName("key")]
     public TreasureItemSettings? Key { get; init; }
+
+    [JsonPropertyName("markedKey")]
+    public TreasureItemSettings? MarkedKey { get; init; }
+
+    /// <summary>Key templates the marked-room key opens (vanilla + modded "marked" keys).</summary>
+    [JsonPropertyName("markedKeys")]
+    public List<string>? MarkedKeys { get; init; }
 }
 
 /// <summary>
@@ -40,7 +47,7 @@ public class TreasureRouter(JsonUtil jsonUtil, TreasureConfigStore store, Treasu
 [
     // A bodiless request arrives as EmptyRequestData; typing it as anything else throws (kb 10.6).
     new RouteAction<EmptyRequestData>(TreasureIds.RouteGet, (_, _, _, _, _) =>
-        new ValueTask<string>(Respond(TreasureConfigStore.Current, null, false))),
+        new ValueTask<string>(Respond(TreasureConfigStore.Current, null, false, runtime.MarkedKeyIds()))),
 
     new RouteAction<TreasureSettings>(TreasureIds.RouteSet, (_, request, _, _, _) =>
     {
@@ -53,7 +60,7 @@ public class TreasureRouter(JsonUtil jsonUtil, TreasureConfigStore store, Treasu
 
             var (previous, applied, saved) = store.Replace(request);
             var changes = runtime.Apply(previous, applied);
-            return new ValueTask<string>(Respond(applied, changes, saved));
+            return new ValueTask<string>(Respond(applied, changes, saved, runtime.MarkedKeyIds()));
         }
         catch (Exception ex)
         {
@@ -62,13 +69,15 @@ public class TreasureRouter(JsonUtil jsonUtil, TreasureConfigStore store, Treasu
     }),
 ])
 {
-    private static string Respond(TreasureSettings settings, List<string>? changes, bool saved) =>
+    private static string Respond(TreasureSettings settings, List<string>? changes, bool saved, List<string>? markedKeys) =>
         JsonSerializer.Serialize(new TreasureSettingsResponse
         {
             Saved = saved,
             Changes = changes,
             Keycard = settings.Keycard,
             Key = settings.Key,
+            MarkedKey = settings.MarkedKey,
+            MarkedKeys = markedKeys,
         });
 
     private static string Fail(string error) =>

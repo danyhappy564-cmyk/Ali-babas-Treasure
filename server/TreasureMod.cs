@@ -11,12 +11,12 @@ using SPTarkov.Server.Core.Services.Items;
 namespace AlibabaTreasure.Server;
 
 /// <summary>
-/// Registers 알리바바의 키카드 and 알리바바의 열쇠, and keeps them out of every place the game could
-/// hand one out for free.
+/// Registers 알리바바의 키카드, 알리바바의 열쇠 and 알리바바의 마크방 열쇠, and keeps them out of every
+/// place the game could hand one out for free.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Both items are clones of vanilla templates (a Labs keycard and a marked key), so their models are
+/// All three are clones of vanilla templates (an Interchange keycard, a plain key, a marked key), so their models are
 /// already in the client and there is no bundle to ship (same approach as SJ-0 Nocturne).
 /// </para>
 /// <para>
@@ -33,6 +33,7 @@ public class TreasureMod(
     TreasureRuntime runtime,
     TemplateTable templates,
     LocaleTable locales,
+    LocationTable locationTable,
     ItemConfig itemConfig,
     ItemFilterService itemFilterService
 ) : IOnLoad
@@ -60,10 +61,11 @@ public class TreasureMod(
             "알리바바의 키카드",
             "Ali Card",
             "알리 카드",
-            "A golden access card nobody at TerraGroup admits to issuing. Every card reader it is held "
-            + "against blinks green - Labs doors, storage rooms, all of them. Its chip is not built to last.",
-            "테라그룹 누구도 발급한 적 없다는 황금빛 출입 카드. 갖다 대는 카드 리더마다 초록불이 켜진다 — "
-            + "랩스 문도, 창고도, 전부. 칩은 오래 버티도록 만들어지지 않았다.",
+            "An access card nobody at TerraGroup admits to issuing. Every card reader it is held against "
+            + "blinks green - Labs doors, storage rooms, keycard extracts, even the Labs entrance. "
+            + "Its chip is not built to last.",
+            "테라그룹 누구도 발급한 적 없다는 출입 카드. 갖다 대는 카드 리더마다 초록불이 켜진다 — "
+            + "랩스 문도, 창고도, 키카드 탈출구도, 랩스 입구까지. 칩은 오래 버티도록 만들어지지 않았다.",
             TreasureIds.HandbookElectronicKeys,
             s => s.Keycard!),
         new(
@@ -73,12 +75,26 @@ public class TreasureMod(
             "알리바바의 열쇠",
             "Ali Key",
             "알리 열쇠",
-            "Open sesame. A worn master key that turns in any mechanical lock in Tarkov - marked rooms "
-            + "included. The teeth wear down a little with every door.",
-            "열려라, 참깨. 타르코프의 어떤 기계식 자물쇠에도 돌아가는 낡은 마스터키 — 마크방도 예외가 아니다. "
-            + "문을 열 때마다 이가 조금씩 닳는다.",
+            "Open sesame. A worn master key that turns in any ordinary mechanical lock in Tarkov - doors, "
+            + "trunks, crates, key-locked extracts. Marked rooms are the one thing it will not open. "
+            + "The teeth wear down a little with every door.",
+            "열려라, 참깨. 타르코프의 평범한 기계식 자물쇠라면 어디든 돌아가는 낡은 마스터키 — 문, 트렁크, 상자, "
+            + "열쇠가 필요한 탈출구까지. 마크방만은 열리지 않는다. 문을 열 때마다 이가 조금씩 닳는다.",
             TreasureIds.HandbookMechanicalKeys,
             s => s.Key!),
+        new(
+            TreasureIds.MarkedKeyId,
+            TreasureIds.MarkedKeyCloneSource,
+            "Ali Baba's Marked Key",
+            "알리바바의 마크방 열쇠",
+            "Ali Mark",
+            "알리 마크",
+            "The forty thieves' own key, scratched with a mark nobody can read. It opens every marked "
+            + "room in Tarkov and nothing else.",
+            "사십인의 도둑이 쓰던 열쇠. 아무도 읽지 못하는 표식이 긁혀 있다. 타르코프의 모든 마크방을 열고, "
+            + "그 밖의 문은 하나도 열지 않는다.",
+            TreasureIds.HandbookMechanicalKeys,
+            s => s.MarkedKey!),
     ];
 
     public Task OnLoadAsync(CancellationToken cancellationToken = default)
@@ -100,11 +116,13 @@ public class TreasureMod(
         }
 
         Blacklist(registered);
+        var accessMaps = AddRaidAccessKeys();
         runtime.EnablePatches();
 
         logger.Success(
             $"{LogPrefix} registered {registered.Count} item(s). "
-            + $"Keycard {Describe(settings.Keycard!)} | Key {Describe(settings.Key!)}. "
+            + $"Keycard {Describe(settings.Keycard!)} | Key {Describe(settings.Key!)} | Marked key {Describe(settings.MarkedKey!)}. "
+            + $"Raid entry accepted on: {(accessMaps.Count == 0 ? "-" : string.Join(", ", accessMaps))}. "
             + "Flea market only - spawn chances are 0% unless changed in F12.");
         return Task.CompletedTask;
     }
@@ -148,6 +166,9 @@ public class TreasureMod(
             SpawnRarity = "Not_exist",
 
             QuestItem = false,
+            // The raid-entry check only accepts an examined card (MainMenuShowOperation); a flea
+            // purchase should work at the Labs entrance without inspecting it first.
+            ExaminedByDefault = true,
             ExamineExperience = 0,
             LootExperience = 0,
         };
@@ -155,7 +176,12 @@ public class TreasureMod(
         templates.Items[itemId] = source with
         {
             Id = itemId,
-            Name = definition.Id == TreasureIds.KeycardId ? "alibaba_keycard" : "alibaba_key",
+            Name = definition.Id switch
+            {
+                TreasureIds.KeycardId => "alibaba_keycard",
+                TreasureIds.MarkedKeyId => "alibaba_key_marked",
+                _ => "alibaba_key",
+            },
             Properties = props,
         };
 
@@ -190,6 +216,82 @@ public class TreasureMod(
 
         // The lootable list is cached when ItemFilterService is constructed; feed the cache too.
         itemFilterService.AddItemToLootableBlacklistCache(ids);
+    }
+
+    /// <summary>
+    /// Lets a treasure stand in for a map's entry key (Labs access keycard, Labrys keycard).
+    /// </summary>
+    /// <remarks>
+    /// The client reads one list for both checks: the main menu refuses the raid unless an equipped
+    /// item's template is in <c>AccessKeys</c>, and <c>BaseLocalGame</c> spends a use of that same
+    /// item when the raid starts (discarding it at its last use, never when uses are unlimited).
+    /// Adding the treasure's id to the list is therefore all it takes - the game counts the use.
+    /// </remarks>
+    private List<string> AddRaidAccessKeys()
+    {
+        var maps = new List<string>();
+        foreach (var (name, location) in locationTable.GetDictionary())
+        {
+            var locationBase = location?.Base;
+            if (locationBase is null)
+            {
+                continue;
+            }
+
+            var changed = false;
+            locationBase.AccessKeys = Extend(locationBase.AccessKeys, ref changed);
+            locationBase.AccessKeysPvE = Extend(locationBase.AccessKeysPvE, ref changed);
+            if (changed)
+            {
+                maps.Add(name);
+            }
+        }
+
+        return maps;
+    }
+
+    private IEnumerable<string>? Extend(IEnumerable<string>? accessKeys, ref bool changed)
+    {
+        if (accessKeys is null)
+        {
+            return null;
+        }
+
+        var keys = accessKeys.ToList();
+        var additions = keys
+            .Select(TreasureFor)
+            .Where(id => id is not null && !keys.Contains(id))
+            .Distinct()
+            .ToList();
+        if (additions.Count == 0)
+        {
+            return accessKeys;
+        }
+
+        changed = true;
+        keys.AddRange(additions!);
+        return keys.ToArray();
+    }
+
+    /// <summary>Which treasure stands in for the key with template <paramref name="keyTemplateId"/>, if any.</summary>
+    private string? TreasureFor(string keyTemplateId)
+    {
+        if (!templates.Items.TryGetValue(new MongoId(keyTemplateId), out var template))
+        {
+            return null;
+        }
+
+        if (template.Parent == new MongoId(TreasureIds.KeycardParentId))
+        {
+            return TreasureIds.KeycardId;
+        }
+
+        if (template.Parent == new MongoId(TreasureIds.KeyParentId))
+        {
+            return TreasureIds.VanillaMarkedKeys.Contains(keyTemplateId) ? TreasureIds.MarkedKeyId : TreasureIds.KeyId;
+        }
+
+        return null;
     }
 
     /// <summary>

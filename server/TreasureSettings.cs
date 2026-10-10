@@ -58,6 +58,12 @@ public class TreasureItemSettings
         Price = TreasureLimits.KeyDefaultPrice,
         Uses = TreasureLimits.KeyDefaultUses,
     };
+
+    public static TreasureItemSettings DefaultMarkedKey() => new()
+    {
+        Price = TreasureLimits.MarkedKeyDefaultPrice,
+        Uses = TreasureLimits.MarkedKeyDefaultUses,
+    };
 }
 
 /// <summary>The whole config: one block per item. Doubles as the <c>/set</c> request body.</summary>
@@ -69,11 +75,18 @@ public record TreasureSettings : IRequestData
     [JsonPropertyName("key")]
     public TreasureItemSettings? Key { get; set; }
 
-    /// <summary>Fills a missing block with defaults and clamps every number into range.</summary>
+    [JsonPropertyName("markedKey")]
+    public TreasureItemSettings? MarkedKey { get; set; }
+
+    /// <summary>
+    /// Fills a missing block with defaults and clamps every number into range. A 1.0.0 config has
+    /// no <c>markedKey</c> block; it simply gets the defaults.
+    /// </summary>
     public TreasureSettings Normalised() => new()
     {
         Keycard = (Keycard ?? TreasureItemSettings.DefaultKeycard()).Normalised(),
         Key = (Key ?? TreasureItemSettings.DefaultKey()).Normalised(),
+        MarkedKey = (MarkedKey ?? TreasureItemSettings.DefaultMarkedKey()).Normalised(),
     };
 
     public static TreasureSettings Defaults() => new TreasureSettings().Normalised();
